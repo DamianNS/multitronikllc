@@ -1,6 +1,7 @@
 ﻿using Shared;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 
 namespace multitronikllcAPIMock.Services
 {
@@ -73,7 +74,7 @@ namespace multitronikllcAPIMock.Services
             var assembly = Assembly.GetExecutingAssembly();
             using Stream? stream = assembly.GetManifestResourceStream(nombreRecurso) 
                 ?? throw new Exception($"No se encontró el recurso incrustado: {nombreRecurso}");
-            using StreamReader reader = new(stream);
+            using StreamReader reader = new(stream, Encoding.UTF8);
             string contenido = reader.ReadToEnd();
             return contenido;
         }

@@ -35,7 +35,7 @@ namespace Shared
             {
                 throw new CheckSumException(header);
             }
-            string data = Encoding.ASCII.GetString(variableDataSpan);
+            string data = Encoding.UTF8.GetString(variableDataSpan);
             return new Tuple<PacketHeader, string>(header, data);
         }
 

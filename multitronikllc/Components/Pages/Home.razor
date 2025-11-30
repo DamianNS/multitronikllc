@@ -40,6 +40,15 @@
     </div>
 </div>
 
+@if(miHtml != null)
+{
+    @foreach (var s in miHtml)
+    {
+        <p>@s</p>
+    }
+
+}
+
 @code {
     [SupplyParameterFromForm]
     private DatosModel Datos { get; set; } = new DatosModel();
@@ -52,6 +61,10 @@
 
     [Inject]
     private IJSRuntime jS { get; set; }
+
+    private Dictionary<int, string> bloques = [];
+    private List<string> bloquesFinal = [];
+    private IEnumerable<MarkupString> miHtml;
 
     protected override Task OnInitializedAsync()
     {
@@ -90,6 +103,48 @@
 
     private void Bg_OnPaketReceived(BackgroudTask? sender, Tuple<int,string> e)
     {
+        // procesar el texto para ir mostrando en pantalla
+        if(bloques.ContainsKey(e.Item1))
+        {
+            return;            
+        }
+        bloques.Add(e.Item1, e.Item2);
+        var ordenado = bloques.OrderBy(b => b.Key);
         Console.WriteLine($"Paquete recibido: {e.Item1} - {e.Item2}");
+
+        int id = 0;
+        bool puntos = false;
+        bloquesFinal.Clear();
+        foreach (var b in ordenado)
+        {
+            if(id == 0)
+            {
+                id = b.Key;
+                bloquesFinal.Add(b.Value);
+                continue;
+            }
+            if(id == b.Key -1)
+            {
+                bloquesFinal.Add(b.Value);
+                id = b.Key;
+                puntos = false;
+                continue;
+            }
+            if(!puntos)
+            {
+                bloquesFinal.Add("...");
+                puntos = true;
+                id = b.Key;
+            }
+            else
+            {
+                puntos = false;
+            }
+            bloquesFinal.Add(b.Value);
+        }
+        string final = string.Join("", bloquesFinal);
+        var lista = final.Split("\n");
+        miHtml = lista.Select(s=> new MarkupString(s));
+        StateHasChanged();
     }
 }
