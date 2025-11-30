@@ -4,4 +4,5 @@
   </Folder>
   <Project Path="multitronikllc/multitronikllc.csproj" />
   <Project Path="multitronikllcAPIMock/multitronikllcAPIMock.csproj" />
+  <Project Path="Shared/Shared.csproj" Id="e98676bb-91a8-4e46-bccd-f6d80546b9ce" />
 </Solution>

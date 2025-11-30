@@ -1,2 +1,7 @@
 /multitronikllc/obj
 /multitronikllcAPIMock/obj
+/.vs
+/multitronikllc/bin
+/multitronikllcAPIMock/bin
+/Shared/bin
+/Shared/obj
