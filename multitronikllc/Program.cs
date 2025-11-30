@@ -1,4 +1,5 @@
 using multitronikllc.Components;
+using multitronikllc.Servicios;
 
 namespace multitronikllc
 {
@@ -12,6 +13,10 @@ namespace multitronikllc
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            builder.Services.AddHttpClient();
+            builder.Services.AddScoped<BackgroudTask>();
+            builder.Services.AddScoped<SrvApiService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -22,11 +27,9 @@ namespace multitronikllc
 
             app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
             app.UseAntiforgery();
-
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
-
             app.Run();
         }
     }

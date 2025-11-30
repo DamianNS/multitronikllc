@@ -7,7 +7,7 @@ namespace Shared
 {
     public static class ProcesarPacket
     {
-        public static string GetData(byte[] rawPacketData)
+        public static Tuple<PacketHeader, string> GetData(byte[] rawPacketData)
         {
             Span<byte> packetSpan = rawPacketData;
             int headerSize = Marshal.SizeOf<PacketHeader>();
@@ -29,9 +29,14 @@ namespace Shared
                 throw new ProcessException($"Error: El paquete está incompleto. Esperaba {minimumTotalSize} bytes, recibí {packetSpan.Length}.");
             }
             
-            Span<byte> variableDataSpan = packetSpan.Slice(headerSize, expectedDataSize);            
+            Span<byte> variableDataSpan = packetSpan.Slice(headerSize, expectedDataSize);
+            var check = variableDataSpan.ToArray().CalculateChecksum();
+            if (check != header.Checksum)
+            {
+                throw new CheckSumException(header);
+            }
             string data = Encoding.ASCII.GetString(variableDataSpan);
-            return data;
+            return new Tuple<PacketHeader, string>(header, data);
         }
 
         public static Tuple<PacketHeader, byte[]> GeneratePackages(int id, string? texto = null)

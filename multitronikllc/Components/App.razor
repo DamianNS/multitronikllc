@@ -1,21 +1,24 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es-ar" data-bs-theme="dark">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["bootstrap/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["multitronikllc.styles.css"]" />
+    <script type="text/javascript" src="@Assets["js/misjss.js"]"></script>
     <ImportMap />
-    <HeadOutlet @rendermode="InteractiveServer" />
+    <HeadOutlet @rendermode="InteractiveServer" />    
 </head>
 
 <body>
     <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["bootstrap/js/bootstrap.bundle.min.js"]"></script>
 </body>
 
 </html>

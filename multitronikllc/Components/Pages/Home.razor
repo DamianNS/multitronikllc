@@ -1,7 +1,95 @@
 ﻿@page "/"
+@using multitronikllc.Models
+@using multitronikllc.Servicios
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Chalenge - Multitronik</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Chalenge - Multitronik</h1>
+<EditForm Model="Datos" OnValidSubmit="() => onSubmit()" FormName="Starship1">
+    <AntiforgeryToken />
+    <div class="mb-3">
+        <label for="exampleInputEmail1" class="form-label">Id Usuario</label>
+        <InputNumber class="form-control" @bind-Value="Datos.Id" max="999" min="1" step="1" aria-describedby="idUserHelp" />        
+        <div id="idUserHelp" class="form-text">Ingrese un numero entero menor a 1000.</div>
+    </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="exampleCheck1">
+        <label class="form-check-label" for="exampleCheck1">Obtener final primero</label>
+    </div>
+    <button type="submit" class="btn btn-primary" @onclick="() => onStart()">Iniciar</button>
+    <button type="submit" class="btn btn-primary">Reiniciar</button>
+    <button type="submit" class="btn btn-primary">Detener</button>
+</EditForm>
 
-Welcome to your new app.
+@if (ErrorDeIngreso)
+{
+    <div class="alert alert-danger" role="alert">
+        A simple danger alert—check it out!
+    </div>
+}
+
+<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+        <img src="..." class="rounded me-2" alt="...">
+        <strong class="me-auto">Bootstrap</strong>
+        <small>11 mins ago</small>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+        Hello, world! This is a toast message.
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private DatosModel Datos { get; set; } = new DatosModel();
+
+    [Inject]
+    private BackgroudTask bg { get; set; }
+
+    private Task? EnProceso = null;
+    private bool ErrorDeIngreso = false;
+
+    [Inject]
+    private IJSRuntime jS { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        bg.OnPaketReceived += Bg_OnPaketReceived;
+
+        return base.OnInitializedAsync();
+    }
+
+    private async Task<bool> onSubmit()
+    {
+        ErrorDeIngreso = false;
+        if (Datos.Id > 0 && Datos.Id < 1000){            
+            return true;
+        }
+        else
+        {
+            await jS.InvokeVoidAsync("myJsFunction");
+            ErrorDeIngreso = true;
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                ErrorDeIngreso = false;                
+            });
+        }
+        return false;
+    }
+
+    private void onStart()
+    {
+        if(Datos == null || Datos.Id == null)
+        {
+            return;
+        }
+        EnProceso = bg.Start(Datos.Id.Value);
+    }
+
+    private void Bg_OnPaketReceived(BackgroudTask? sender, Tuple<int,string> e)
+    {
+        Console.WriteLine($"Paquete recibido: {e.Item1} - {e.Item2}");
+    }
+}

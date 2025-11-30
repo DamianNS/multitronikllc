@@ -38,6 +38,7 @@ namespace multitronikllcAPIMock.Controllers
         [HttpGet("get-next-packet")]
         public byte[]? GetNextPacket()
         {
+            Task.Delay(1000).Wait(); // Simula un retardo de 2 segundos
             var userId = GetUsuarioIdFromHeaders();
             if (userId == -1)
             {
