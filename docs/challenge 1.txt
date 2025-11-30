@@ -1,0 +1,24 @@
+Challenge:
+
+Tenemos un endpoint con un protocolo que devuelve paquetes con palabras de un texto, el programa tiene que obtener todos los paquetes, validarlos y armar el texto final (que es un extracto de un libro).
+Cada vez que se llama a restart se renuevan los paquetes y la porción de texto devuelta. Es un reset como para intentar la prueba de cero, en el programa final se debe ejecutar al comenzar el programa, pero quizás para hacer debug es útil no ejecutarlo para mantener el estado entre pruebas.
+Los endpoints son los siguientes:
+
+http://desa.multitronikllc.com:4541/challenge/restart?userId=546
+Reinicia los datos para comenzar la prueba desde cero.
+
+http://desa.multitronikllc.com:4541/challenge/get-next-packet
+Devuelve un bloque de datos, un bloque puede tener dentro uno o varios paquetes.
+
+Cada paquete tiene el siguiente formato:
+Packet ID: 4 bytes int
+Longitud del payload: 1 byte
+Checksum: 1 byte (en este caso el checksum es la suma de todos los bytes del payload sin considerar overflow)
+Payload
+
+
+http://desa.multitronikllc.com:4541/challenge/retry-packet?packetId=xxxxxxx
+Si un paquete tiene mal el checksum hay que volver a pedirlo con el endpoint de retry, esta funcion devuelve solo el paquete pedido
+
+http://desa.multitronikllc.com:4541/challenge/ack-packet?packetId=xxxxxxx
+Cada paquete que tenga el checksum ok se debe confirmar llamando éste endpoint de ACK con el packet Id a confirmar.

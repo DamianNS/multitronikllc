@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Documentos/">
+    <File Path="docs/challenge 1.txt" />
+  </Folder>
+  <Project Path="multitronikllc/multitronikllc.csproj" />
+  <Project Path="multitronikllcAPIMock/multitronikllcAPIMock.csproj" />
+</Solution>
