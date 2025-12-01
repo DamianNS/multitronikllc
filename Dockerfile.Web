@@ -7,13 +7,10 @@ WORKDIR /src
 
 # Copia el archivo de proyecto (csproj) y restaura las dependencias. 
 # Esto aprovecha el cache de Docker si solo cambian los archivos de código.
-RUN mkdir multitronikllcAPIMock
 RUN mkdir multitronikllc
 RUN mkdir Shared
-COPY ["./multitronikllcAPIMock/multitronikllcAPIMock.csproj", "./multitronikllcAPIMock/"]
 COPY ["./multitronikllc/multitronikllc.csproj", "./multitronikllc/"]
 COPY ["./Shared/Shared.csproj", "./Shared/"]
-RUN dotnet restore "./multitronikllcAPIMock/multitronikllcAPIMock.csproj"
 RUN dotnet restore "./multitronikllc/multitronikllc.csproj"
 RUN dotnet restore "./Shared/Shared.csproj"
 
@@ -21,8 +18,6 @@ RUN dotnet restore "./Shared/Shared.csproj"
 COPY . .
 
 # Compila y publica la aplicación
-
-RUN dotnet publish "./multitronikllcAPIMock/multitronikllcAPIMock.csproj" -c Release -o /app/multitronikllcAPIMock
 RUN dotnet publish "./multitronikllc/multitronikllc.csproj" -c Release -o /app/multitronikllc
 
 # ----------------------------------------------------------------------
@@ -31,7 +26,10 @@ RUN dotnet publish "./multitronikllc/multitronikllc.csproj" -c Release -o /app/m
 # ----------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
-COPY --from=build /app/multitronikllcAPIMock .
+COPY --from=build /app/multitronikllc .
+
+ENV ASPNETCORE_URLS=http://+:5001
+EXPOSE 5001
 
 # Define el punto de entrada para la aplicación
 ENTRYPOINT ["dotnet", "multitronikllcAPIMock.dll"]

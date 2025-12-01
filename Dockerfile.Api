@@ -30,7 +30,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/multitronikllcAPIMock .
 
-EXPOSE 5050
+ENV ASPNETCORE_URLS=http://+:5000
+EXPOSE 5000
 
 # Define el punto de entrada para la aplicación
 ENTRYPOINT ["dotnet", "multitronikllcAPIMock.dll"]
