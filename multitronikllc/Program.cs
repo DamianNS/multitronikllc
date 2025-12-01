@@ -12,6 +12,7 @@ namespace multitronikllc
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+                      
 
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<BackgroudTask>();

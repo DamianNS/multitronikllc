@@ -11,77 +11,82 @@
         <label for="exampleInputEmail1" class="form-label">Id Usuario</label>
         <InputNumber class="form-control" @bind-Value="Datos.Id" max="999" min="1" step="1" aria-describedby="idUserHelp" />        
         <div id="idUserHelp" class="form-text">Ingrese un numero entero menor a 1000.</div>
-    </div>
-    <div class="mb-3 form-check">
-        <input type="checkbox" class="form-check-input" id="exampleCheck1">
-        <label class="form-check-label" for="exampleCheck1">Obtener final primero</label>
-    </div>
-    <button type="submit" class="btn btn-primary" @onclick="() => onStart()">Iniciar</button>
-    <button type="submit" class="btn btn-primary">Reiniciar</button>
-    <button type="submit" class="btn btn-primary">Detener</button>
+    </div>    
+    <button type="submit" class="btn btn-primary" @onclick="() => onStart()" disabled="@btnStartDisabled">Iniciar</button>
+    <button type="submit" class="btn btn-primary" @onclick="onReiniciar" disabled="@btnStartDisabled">Reiniciar</button>
+    <button type="submit" class="btn btn-primary" @onclick="onDetener" disabled="@(!btnStartDisabled)">Detener</button>
 </EditForm>
 
 @if (ErrorDeIngreso)
 {
-    <div class="alert alert-danger" role="alert">
-        A simple danger alert—check it out!
+    <div class="alert alert-danger mt-1" role="alert">
+        Ingrese un numero de usuario correct (1-999)
     </div>
 }
 
-<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="toast-header">
-        <img src="..." class="rounded me-2" alt="...">
-        <strong class="me-auto">Bootstrap</strong>
-        <small>11 mins ago</small>
-        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+<div class="card mt-1">
+    <div class="card-header">
+        Información del Proceso
     </div>
-    <div class="toast-body">
-        Hello, world! This is a toast message.
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">Elementos recibidos: @intRecibidos</li>
+        <li class="list-group-item">Elementos con error: @intError</li>
+        <li class="list-group-item">Elementos en cola de reintentos: @intReIntentos</li>
+    </ul>
+    <div class="card-body">
+        @if (miHtml != null)
+        {
+            @foreach (var s in miHtml)
+            {
+                <p>@s</p>
+            }
+
+        }
     </div>
 </div>
 
-@if(miHtml != null)
-{
-    @foreach (var s in miHtml)
-    {
-        <p>@s</p>
-    }
-
-}
-
 @code {
     [SupplyParameterFromForm]
-    private DatosModel Datos { get; set; } = new DatosModel();
+    private DatosModel Datos { get; set; } = new();
 
     [Inject]
-    private BackgroudTask bg { get; set; }
+    private BackgroudTask bg { get; set; } = null!;
+
+    [Inject]
+    private SrvApiService api { get; set; } = null!;
 
     private Task? EnProceso = null;
     private bool ErrorDeIngreso = false;
 
-    [Inject]
-    private IJSRuntime jS { get; set; }
-
     private Dictionary<int, string> bloques = [];
     private List<string> bloquesFinal = [];
-    private IEnumerable<MarkupString> miHtml;
+    private IEnumerable<MarkupString> miHtml = [];
+    private bool btnStartDisabled = false;
+    private int intRecibidos;
+    private int intError;
+    private int intReIntentos;
+
 
     protected override Task OnInitializedAsync()
     {
         bg.OnPaketReceived += Bg_OnPaketReceived;
+        bg.OnPaketError += Bg_OnPaketError;
 
         return base.OnInitializedAsync();
     }
 
     private async Task<bool> onSubmit()
     {
+        if(Datos == null)
+        {         
+            return false;
+        }
         ErrorDeIngreso = false;
         if (Datos.Id > 0 && Datos.Id < 1000){            
             return true;
         }
         else
-        {
-            await jS.InvokeVoidAsync("myJsFunction");
+        {         
             ErrorDeIngreso = true;
             _ = Task.Run(async () =>
             {
@@ -94,14 +99,23 @@
 
     private void onStart()
     {
+        intRecibidos = 0;
+        ErrorDeIngreso = false;
         if(Datos == null || Datos.Id == null)
         {
+            ErrorDeIngreso = true;
             return;
         }
         EnProceso = bg.Start(Datos.Id.Value);
+        btnStartDisabled = true;
+        EnProceso.ContinueWith(t =>
+        {
+            btnStartDisabled = false;
+            Console.WriteLine("Proceso finalizado");
+        });
     }
 
-    private void Bg_OnPaketReceived(BackgroudTask? sender, Tuple<int,string> e)
+    private async void Bg_OnPaketReceived(BackgroudTask? sender, Tuple<int,string> e)
     {
         // procesar el texto para ir mostrando en pantalla
         if(bloques.ContainsKey(e.Item1))
@@ -111,7 +125,7 @@
         bloques.Add(e.Item1, e.Item2);
         var ordenado = bloques.OrderBy(b => b.Key);
         Console.WriteLine($"Paquete recibido: {e.Item1} - {e.Item2}");
-
+        intRecibidos++;
         int id = 0;
         bool puntos = false;
         bloquesFinal.Clear();
@@ -145,6 +159,38 @@
         string final = string.Join("", bloquesFinal);
         var lista = final.Split("\n");
         miHtml = lista.Select(s=> new MarkupString(s));
-        StateHasChanged();
+        await InvokeAsync(()=> { StateHasChanged(); });
+        await Task.Yield();
+    }
+
+    private void Bg_OnPaketError(object? sender, int totalReintentos)
+    {
+        intError++;
+        intReIntentos = totalReintentos;
+    }
+
+    private void onDetener()
+    {
+        bg.Stop();
+        btnStartDisabled = false;
+    }
+
+    private async Task onReiniciar()
+    {
+        if (Datos == null || Datos.Id == null)
+        {
+            ErrorDeIngreso = true;
+            return;
+        }
+        bg.Stop();
+        bloques.Clear();
+        bloquesFinal.Clear();
+        miHtml = [];
+        intRecibidos = 0;
+        ErrorDeIngreso = false;
+        intError = 0;
+        intReIntentos = 0;
+        api.userId = Datos.Id.Value;
+        await api.Restart();
     }
 }

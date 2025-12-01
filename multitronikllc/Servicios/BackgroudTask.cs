@@ -1,8 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.OAuth.Claims;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Shared;
+﻿using Shared;
 using System.Collections.Concurrent;
-using System.ComponentModel.Design;
 
 namespace multitronikllc.Servicios
 {
@@ -10,63 +7,86 @@ namespace multitronikllc.Servicios
     {
         private BlockingCollection<PacketHeader> reintentos = new BlockingCollection<PacketHeader>();
         public EventHandler<BackgroudTask, Tuple<int, string>>? OnPaketReceived;
-        
+        public EventHandler<BackgroudTask, int>? OnPaketError;
+        private bool hayMas = false;
+
         public async Task Start(int id)
         {
             api.userId = id;
-            var hayMas = true;
+            hayMas = true;
             var reintentosLimite = 0;
 
             var taskReintentos = Task.Run(async () =>
             {
-                while (reintentosLimite < 999)
+                try
                 {
-                    await Task.Delay(1000);
-                    if (reintentos.TryTake(out PacketHeader item))
+                    while (reintentosLimite < 999)
                     {
-                        reintentosLimite++;
-                        hayMas = await ProesarPaquete(item.Id);                        
-                    }                    
-                    if (!hayMas && !reintentos.Any()) break;                    
+                        await Task.Delay(1000);
+                        if (reintentos.TryTake(out PacketHeader item))
+                        {
+                            reintentosLimite++;                            
+                            await ProesarPaquete(item.Id);
+                            await Task.Yield();
+                            OnPaketError?.Invoke(this, reintentos.Count());
+                        }
+                        if (!hayMas && !reintentos.Any()) break;
+                    }
+                    Console.WriteLine("Finalizando tarea de reintentos");
+                    return Task.CompletedTask;
                 }
+                catch (Exception eex)
+                {
+                    throw;
+                }
+                
             });
             
             do
-            {
-                try
-                {
-                    hayMas = await ProesarPaquete();                    
-                }
-                catch (CheckSumException ex)
-                {
-                    reintentos.Add(ex.Packet);
-                    continue;
-                }
+            {   
+                var ret = await ProesarPaquete();
+                if (!ret) hayMas = false;
+                await Task.Yield();
             } while (hayMas);
 
-            taskReintentos.Wait();
+            await taskReintentos;
+        }
+
+        public void Stop()
+        {
+            hayMas = false;
         }
 
         private async Task<bool> ProesarPaquete(int? id = null)
         {
             try
             {
-                var p = await api.LeerPackete(id);
-                if (p.Item1.Id != -1) // valido que no hay mas paquetes
+                try
                 {
-                    var t = new Tuple<int, string>(p.Item1.Id, p.Item2);
-                    OnPaketReceived?.Invoke(this, t);
+                    var p = await api.LeerPackete(id);
+                    if (p.Item1.Id != -1) // valido que no hay mas paquetes
+                    {
+                        var t = new Tuple<int, string>(p.Item1.Id, p.Item2);
+                        OnPaketReceived?.Invoke(this, t);
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
-                else
+                catch (CheckSumException ex)
                 {
-                    return false;
+                    reintentos.Add(ex.Packet);
+                    OnPaketError?.Invoke(this, reintentos.Count());
                 }
+                return true;
             }
-            catch (CheckSumException ex)
+            catch (Exception eex)
             {
-                reintentos.Add(ex.Packet);
+
+                throw;
             }
-            return true;
+            
         }
     }
 }

@@ -46,6 +46,35 @@ namespace multitronikllcAPIMock.Services
             return paquete;
         }
 
+        public PacketModel GetPackageError(int id)
+        {
+            if (!_usuarios.ContainsKey(id))
+            {
+                AgregarUsuario(id);
+            }
+            var paquetes = _usuarios[id];
+            if (paquetes.Count == 0)
+            {
+                return NullPacage();
+            }            
+            var noEnviados = paquetes.Where(p => p.Status == EstadoEnum.Pendiente).ToList();
+            if (!noEnviados.Any())
+            {
+                return NullPacage();
+            }
+            var index = _random.Next(noEnviados.Count);
+            var paquete = noEnviados[index];
+            paquete.Status = EstadoEnum.Enviado;
+            var nuevoPaket = new PacketHeader {
+                Id = paquete.Paket.Id,
+                Size = paquete.Paket.Size,
+                Checksum = 0
+            };
+
+            var paquete2 = new PacketModel(nuevoPaket, paquete.Data);
+            return paquete2;
+        }
+
         private PacketModel NullPacage()
         {            
             var head = ProcesarPacket.GeneratePackages(-1);

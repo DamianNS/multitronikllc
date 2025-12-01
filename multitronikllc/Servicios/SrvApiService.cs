@@ -3,21 +3,23 @@ using static System.Net.WebRequestMethods;
 
 namespace multitronikllc.Servicios
 {
-    public class SrvApiService(HttpClient http)
+    public class SrvApiService(HttpClient http, IConfiguration configRoot)
     {
-        public int userId { set {
+        public int userId { get; set {
                 http.DefaultRequestHeaders.Remove("usuario-id");
-                http.DefaultRequestHeaders.Add("usuario-id", value.ToString());
+                http.DefaultRequestHeaders.Add("usuario-id", field.ToString());
             } }
 
+        private string url = configRoot.GetValue<string>("serverUrl") ?? "http://mi-api:5000";
+
         public async Task<Tuple<PacketHeader, string>> LeerPackete(int? id = null)
-        {
+        {            
             HttpResponseMessage reponse;
             if (id == null)
             {
                 try
                 {
-                    reponse = await http.GetAsync("http://mi-api:5000/Challenge/get-next-packet");
+                    reponse = await http.GetAsync($"{url}/Challenge/get-next-packet");
                 }
                 catch (Exception)
                 {
@@ -27,11 +29,16 @@ namespace multitronikllc.Servicios
             }
             else
             {
-                reponse = await http.GetAsync($"http://mi-api:5000/Challenge/retry-packet?packetId={id}");                
+                reponse = await http.GetAsync($"{url}/Challenge/retry-packet?packetId={id}");                
             }            
             var dataJsonBase64 = await reponse.Content.ReadFromJsonAsync<string>();
             var dataBinary = Convert.FromBase64String(dataJsonBase64);
             return ProcesarPacket.GetData(dataBinary);
+        }
+
+        public async Task Restart()
+        {
+            await http.GetAsync($"{url}/Challenge/restart?userId={userId}");
         }
     }
 }

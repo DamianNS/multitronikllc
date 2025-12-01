@@ -9,6 +9,8 @@ namespace multitronikllcAPIMock.Controllers
     [Route("[controller]")]
     public class ChallengeController(UsuariosService us) : ControllerBase
     {
+        private readonly Random _random = new();
+
         [HttpGet("restart")]
         public void Restart()
         {
@@ -45,7 +47,21 @@ namespace multitronikllcAPIMock.Controllers
                 Response.StatusCode = 400; // Bad Request
                 return null;
             }
-            var packet = us.GetPackage(userId);
+
+            PacketModel packet;
+            if (_random.Next(5) == 1)
+            {
+                packet = us.GetPackageError(userId);
+            }
+            else
+            {
+                packet = us.GetPackage(userId);
+            }
+                
+
+            // emulo una trasmision incorrecta
+            
+
             return ProcesarPacket.GetRawPaket(packet.Paket, packet.Data);
         }
 
