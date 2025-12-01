@@ -1,6 +1,6 @@
 services:
   # Servicio para la primera API
-  api:
+  mi-api:
     build:
       context: .
       dockerfile: Dockerfile.Api # Ruta al Dockerfile de la API 1
@@ -9,10 +9,10 @@ services:
     ports:
       - "8090:5000"
     networks:
-      - app-net # Para que se comuniquen entre sí
+      - mi-app-net # Para que se comuniquen entre sí
 
   # Servicio para la segunda API
-  web:
+  mi-web:
     build:
       context: .
       dockerfile: Dockerfile.Web
@@ -21,8 +21,8 @@ services:
     ports:
       - "8091:5001" # Mapea puerto externo 8081 al 80 interno
     networks:
-      - app-net
+      - mi-app-net
 
 networks:
-  app-net:
+  mi-app-net:
     driver: bridge # Red por defecto de Docker Compose
