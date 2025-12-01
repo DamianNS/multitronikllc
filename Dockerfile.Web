@@ -32,4 +32,4 @@ ENV ASPNETCORE_URLS=http://+:5001
 EXPOSE 5001
 
 # Define el punto de entrada para la aplicación
-ENTRYPOINT ["dotnet", "multitronikllcAPIMock.dll"]
+ENTRYPOINT ["dotnet", "multitronikllc.dll"]
