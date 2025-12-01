@@ -17,7 +17,7 @@ namespace multitronikllc.Servicios
             {
                 try
                 {
-                    reponse = await http.GetAsync("http://localhost:5136/Challenge/get-next-packet");
+                    reponse = await http.GetAsync("http://web:5000/Challenge/get-next-packet");
                 }
                 catch (Exception)
                 {
@@ -27,7 +27,7 @@ namespace multitronikllc.Servicios
             }
             else
             {
-                reponse = await http.GetAsync($"http://localhost:5136/Challenge/retry-packet?packetId={id}");                
+                reponse = await http.GetAsync($"http://web:5000/Challenge/retry-packet?packetId={id}");                
             }            
             var dataJsonBase64 = await reponse.Content.ReadFromJsonAsync<string>();
             var dataBinary = Convert.FromBase64String(dataJsonBase64);

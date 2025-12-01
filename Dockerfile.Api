@@ -1,0 +1,36 @@
+# ----------------------------------------------------------------------
+# STAGE 1: Build (Compilación)
+# Usamos el SDK para compilar la aplicación
+# ----------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copia el archivo de proyecto (csproj) y restaura las dependencias. 
+# Esto aprovecha el cache de Docker si solo cambian los archivos de código.
+RUN mkdir multitronikllcAPIMock
+RUN mkdir multitronikllc
+RUN mkdir Shared
+COPY ["./multitronikllcAPIMock/multitronikllcAPIMock.csproj", "./multitronikllcAPIMock/"]
+COPY ["./Shared/Shared.csproj", "./Shared/"]
+RUN dotnet restore "./multitronikllcAPIMock/multitronikllcAPIMock.csproj"
+RUN dotnet restore "./Shared/Shared.csproj"
+
+# Copia el resto del código fuente
+COPY . .
+
+# Compila y publica la aplicación
+
+RUN dotnet publish "./multitronikllcAPIMock/multitronikllcAPIMock.csproj" -c Release -o /app/multitronikllcAPIMock
+
+# ----------------------------------------------------------------------
+# STAGE 2: Final (Ejecución)
+# Usamos solo el runtime, que es más liviano y seguro.
+# ----------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+COPY --from=build /app/multitronikllcAPIMock .
+
+EXPOSE 5050
+
+# Define el punto de entrada para la aplicación
+ENTRYPOINT ["dotnet", "multitronikllcAPIMock.dll"]

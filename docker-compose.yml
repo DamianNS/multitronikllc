@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Servicio para la primera API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.Api # Ruta al Dockerfile de la API 1
+    environment:      
+      - ASPNETCORE_URLS=http://+:5000
+    ports:
+      - "8090:5000"
+    networks:
+      - app-net # Para que se comuniquen entre sí
+
+  # Servicio para la segunda API
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.Web
+    environment:
+      - ASPNETCORE_URLS=http://+:5001
+    ports:
+      - "8091:5001" # Mapea puerto externo 8081 al 80 interno
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge # Red por defecto de Docker Compose
