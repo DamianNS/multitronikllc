@@ -24,6 +24,19 @@
     </div>
 }
 
+@if (!btnStartDisabled)
+{
+    <div class="alert alert-success mt-1" role="alert">
+        STOP
+    </div>
+}
+else
+{
+    <div class="alert alert-danger mt-1" role="alert">
+        RUNNING...
+    </div>
+}
+
 <div class="card mt-1">
     <div class="card-header">
         Información del Proceso
@@ -112,7 +125,8 @@
         {
             btnStartDisabled = false;
             Console.WriteLine("Proceso finalizado");
-        });
+            InvokeAsync(() => { StateHasChanged(); });
+        });        
     }
 
     private async void Bg_OnPaketReceived(BackgroudTask? sender, Tuple<int,string> e)

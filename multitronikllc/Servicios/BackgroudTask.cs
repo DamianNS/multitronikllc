@@ -22,7 +22,7 @@ namespace multitronikllc.Servicios
                 {
                     while (reintentosLimite < 999)
                     {
-                        await Task.Delay(1000);
+                        await Task.Delay(hayMas ? 1000 : 200);
                         if (reintentos.TryTake(out PacketHeader item))
                         {
                             reintentosLimite++;                            
@@ -76,8 +76,7 @@ namespace multitronikllc.Servicios
                 }
                 catch (CheckSumException ex)
                 {
-                    reintentos.Add(ex.Packet);
-                    OnPaketError?.Invoke(this, reintentos.Count());
+                    reintentos.Add(ex.Packet);                    
                 }
                 return true;
             }
