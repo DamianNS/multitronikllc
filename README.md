@@ -46,3 +46,6 @@ Para detener se presiona CTRL+C y:
 ```
 podman compose down
 ```
+### Archivo de configuración
+
+![corriendo](/docs/running.png)

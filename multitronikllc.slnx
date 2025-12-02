@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Documentos/">
     <File Path="docs/challenge 1.txt" />
+    <File Path="README.md" />
   </Folder>
   <Project Path="multitronikllc/multitronikllc.csproj" />
   <Project Path="multitronikllcAPIMock/multitronikllcAPIMock.csproj" />

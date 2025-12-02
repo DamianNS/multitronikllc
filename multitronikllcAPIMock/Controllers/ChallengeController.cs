@@ -7,9 +7,10 @@ namespace multitronikllcAPIMock.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ChallengeController(UsuariosService us) : ControllerBase
+    public class ChallengeController(UsuariosService us, IConfiguration configRoot) : ControllerBase
     {
         private readonly Random _random = new();
+        private int dealy = configRoot.GetValue<int>("delay") == 0 ? 1000: configRoot.GetValue<int>("delay");
 
         [HttpGet("restart")]
         public void Restart()
@@ -40,7 +41,7 @@ namespace multitronikllcAPIMock.Controllers
         [HttpGet("get-next-packet")]
         public ResponsePacket? GetNextPacket()
         {
-            //Task.Delay(100).Wait(); // Simula un retardo de 2 segundos
+            Task.Delay(dealy).Wait(); // Simula un retardo
             var userId = GetUsuarioIdFromHeaders();
             if (userId == -1)
             {

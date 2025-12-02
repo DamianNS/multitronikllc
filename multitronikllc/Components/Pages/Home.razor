@@ -68,6 +68,9 @@ else
     [Inject]
     private SrvApiService api { get; set; } = null!;
 
+    [Inject]
+    private IConfiguration configRoot { get; set; } = null!;
+
     private Task? EnProceso = null;
     private bool ErrorDeIngreso = false;
 
@@ -79,11 +82,14 @@ else
     private int intError;
     private int intReIntentos;
 
+    private bool sinOrden;
 
     protected override Task OnInitializedAsync()
     {
         bg.OnPaketReceived += Bg_OnPaketReceived;
         bg.OnPaketError += Bg_OnPaketError;
+
+        sinOrden = configRoot.GetValue<bool>("sinOrde");
 
         return base.OnInitializedAsync();
     }
@@ -143,7 +149,16 @@ else
             return;            
         }
         bloques.Add(e.Item1, e.Item2);
-        var ordenado = bloques.OrderBy(b => b.Key);
+        IEnumerable<KeyValuePair<int, string>> ordenado;
+        if (sinOrden)
+        {
+            ordenado = bloques;
+        }
+        else
+        {
+            ordenado = bloques.OrderBy(b => b.Key);
+        }
+        
         Console.WriteLine($"Paquete recibido: {e.Item1} - {e.Item2}");
         intRecibidos++;
         int id = 0;
@@ -151,6 +166,11 @@ else
         bloquesFinal.Clear();
         foreach (var b in ordenado)
         {
+            if(sinOrden)
+            {
+                bloquesFinal.Add(b.Value);
+                continue;
+            }
             if(id == 0)
             {
                 id = b.Key;
