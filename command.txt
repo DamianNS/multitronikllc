@@ -1,2 +1,3 @@
 podman build -t multitronikllcapimock:latest -f .\Dockerfile.Api .
 podman build -t multitronikllc:latest -f .\Dockerfile.Web .
+podman compose up --build

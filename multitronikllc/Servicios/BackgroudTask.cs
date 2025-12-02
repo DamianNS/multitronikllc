@@ -22,7 +22,7 @@ namespace multitronikllc.Servicios
                 {
                     while (reintentosLimite < 999)
                     {
-                        await Task.Delay(hayMas ? 1000 : 200);
+                        await Task.Delay(hayMas ? 1000 : 1);
                         if (reintentos.TryTake(out PacketHeader item))
                         {
                             reintentosLimite++;                            
@@ -48,7 +48,7 @@ namespace multitronikllc.Servicios
                 if (!ret) hayMas = false;
                 await Task.Yield();
             } while (hayMas);
-
+                        
             await taskReintentos;
         }
 
@@ -68,6 +68,7 @@ namespace multitronikllc.Servicios
                     {
                         var t = new Tuple<int, string>(p.Item1.Id, p.Item2);
                         OnPaketReceived?.Invoke(this, t);
+                        await api.Ack(p.Item1.Id);
                     }
                     else
                     {
@@ -82,8 +83,8 @@ namespace multitronikllc.Servicios
             }
             catch (Exception eex)
             {
-
-                throw;
+                // en ocaciones tora un 404
+                return true;
             }
             
         }

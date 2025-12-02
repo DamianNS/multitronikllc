@@ -1,4 +1,5 @@
-﻿using Shared;
+﻿using multitronikllc.Models;
+using Shared;
 using static System.Net.WebRequestMethods;
 
 namespace multitronikllc.Servicios
@@ -14,14 +15,14 @@ namespace multitronikllc.Servicios
 
         public async Task<Tuple<PacketHeader, string>> LeerPackete(int? id = null)
         {            
-            HttpResponseMessage reponse;
+            ResponsePacket? response;
             if (id == null)
             {
                 try
                 {
-                    reponse = await http.GetAsync($"{url}/Challenge/get-next-packet");
+                    response = await http.GetFromJsonAsync<ResponsePacket>($"{url}/Challenge/get-next-packet");
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     throw;
                 }
@@ -29,16 +30,25 @@ namespace multitronikllc.Servicios
             }
             else
             {
-                reponse = await http.GetAsync($"{url}/Challenge/retry-packet?packetId={id}");                
+                response = await http.GetFromJsonAsync<ResponsePacket>($"{url}/Challenge/retry-packet?packetId={id}");                
             }            
-            var dataJsonBase64 = await reponse.Content.ReadFromJsonAsync<string>();
-            var dataBinary = Convert.FromBase64String(dataJsonBase64);
+            if(response == null)
+            {
+                throw new Exception("No se pudo obtener el paquete desde el servidor.");
+            }
+            //var dataJsonBase64 = await reponse.Content.ReadFromJsonAsync<string>();
+            var dataBinary = Convert.FromBase64String(response.content);
             return ProcesarPacket.GetData(dataBinary);
         }
 
         public async Task Restart()
         {
             await http.GetAsync($"{url}/Challenge/restart?userId={userId}");
+        }
+
+        internal async Task Ack(int packetId)
+        {
+            await http.GetAsync($"{url}/Challenge/ack-packet?packetId={packetId}");
         }
     }
 }

@@ -119,6 +119,12 @@ else
             ErrorDeIngreso = true;
             return;
         }
+        int userId = Datos.Id.Value;
+        if(userId <1 || userId > 999)
+        {
+            ErrorDeIngreso = true;
+            return;
+        }
         EnProceso = bg.Start(Datos.Id.Value);
         btnStartDisabled = true;
         EnProceso.ContinueWith(t =>
@@ -174,13 +180,14 @@ else
         var lista = final.Split("\n");
         miHtml = lista.Select(s=> new MarkupString(s));
         await InvokeAsync(()=> { StateHasChanged(); });
-        await Task.Yield();
+        await Task.Yield();        
     }
 
     private void Bg_OnPaketError(object? sender, int totalReintentos)
     {
         intError++;
         intReIntentos = totalReintentos;
+        InvokeAsync(() => { StateHasChanged(); });
     }
 
     private void onDetener()

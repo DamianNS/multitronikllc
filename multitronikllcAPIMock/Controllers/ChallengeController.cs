@@ -38,9 +38,9 @@ namespace multitronikllcAPIMock.Controllers
         }
 
         [HttpGet("get-next-packet")]
-        public byte[]? GetNextPacket()
+        public ResponsePacket? GetNextPacket()
         {
-            Task.Delay(100).Wait(); // Simula un retardo de 2 segundos
+            //Task.Delay(100).Wait(); // Simula un retardo de 2 segundos
             var userId = GetUsuarioIdFromHeaders();
             if (userId == -1)
             {
@@ -57,16 +57,19 @@ namespace multitronikllcAPIMock.Controllers
             {
                 packet = us.GetPackage(userId);
             }
-                
+
 
             // emulo una trasmision incorrecta
-            
-
-            return ProcesarPacket.GetRawPaket(packet.Paket, packet.Data);
+            var data = ProcesarPacket.GetRawPaket(packet.Paket, packet.Data);
+            var ret = new ResponsePacket()
+            {
+                content = Convert.ToBase64String(data)
+            };
+            return ret;
         }
 
         [HttpGet("retry-packet")]
-        public byte[]? RetryPacket([FromQuery] int packetId)
+        public ResponsePacket? RetryPacket([FromQuery] int packetId)
         {
             var userId = GetUsuarioIdFromHeaders();
             if (userId == -1)
@@ -77,7 +80,13 @@ namespace multitronikllcAPIMock.Controllers
             else
             {
                 var p = us.RetryPackage(userId, packetId);
-                return ProcesarPacket.GetRawPaket(p.Paket, p.Data);
+                
+                var data = ProcesarPacket.GetRawPaket(p.Paket, p.Data);
+                var ret = new ResponsePacket()
+                {
+                    content = Convert.ToBase64String(data)
+                };
+                return ret;
             }            
         }
 
