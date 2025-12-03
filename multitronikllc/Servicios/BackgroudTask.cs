@@ -54,7 +54,8 @@ namespace multitronikllc.Servicios
                     try
                     {
                         var ret = await ProesarPaquete();
-                        if (!ret) hayMas = false;                        
+                        if (!ret) hayMas = false;
+                        await Task.Yield();
                     }
                     finally
                     {
