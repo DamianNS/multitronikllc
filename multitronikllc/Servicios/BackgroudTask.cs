@@ -3,24 +3,28 @@ using System.Collections.Concurrent;
 
 namespace multitronikllc.Servicios
 {
-    public class BackgroudTask(SrvApiService api)
+    public class BackgroudTask(SrvApiService api, IConfiguration configRoot)
     {
         private BlockingCollection<PacketHeader> reintentos = new BlockingCollection<PacketHeader>();
         public EventHandler<BackgroudTask, Tuple<int, string>>? OnPaketReceived;
         public EventHandler<BackgroudTask, int>? OnPaketError;
         private bool hayMas = false;
+        private int maximoTareas = configRoot.GetValue<int?>("maximoTareas") ?? 10;
+        
 
         public async Task Start(int id)
         {
             api.userId = id;
             hayMas = true;
             var reintentosLimite = 0;
+            var tareasParaleloBloker = new SemaphoreSlim(maximoTareas);
+            var tareasEnParalelo = new List<Task>();
 
             var taskReintentos = Task.Run(async () =>
             {
                 try
                 {
-                    while (reintentosLimite < 999)
+                    while (reintentosLimite < 9999)
                     {
                         await Task.Delay(hayMas ? 1000 : 1);
                         if (reintentos.TryTake(out PacketHeader item))
@@ -43,13 +47,24 @@ namespace multitronikllc.Servicios
             });
             
             do
-            {   
-                var ret = await ProesarPaquete();
-                if (!ret) hayMas = false;
-                await Task.Yield();
+            {
+                await tareasParaleloBloker.WaitAsync();
+                tareasEnParalelo.Add(Task.Run(async () =>
+                {                    
+                    try
+                    {
+                        var ret = await ProesarPaquete();
+                        if (!ret) hayMas = false;                        
+                    }
+                    finally
+                    {
+                        tareasParaleloBloker.Release();
+                    }
+                }));                           
             } while (hayMas);
-                        
-            await taskReintentos;
+
+            await Task.WhenAll(tareasEnParalelo);
+            await taskReintentos;            
         }
 
         public void Stop()

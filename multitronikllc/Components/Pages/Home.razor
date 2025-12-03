@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Collections.Concurrent
 @using multitronikllc.Models
 @using multitronikllc.Servicios
 
@@ -74,7 +75,7 @@ else
     private Task? EnProceso = null;
     private bool ErrorDeIngreso = false;
 
-    private Dictionary<int, string> bloques = [];
+    private ConcurrentDictionary<int, string> bloques = [];
     private List<string> bloquesFinal = [];
     private IEnumerable<MarkupString> miHtml = [];
     private bool btnStartDisabled = false;
@@ -83,6 +84,7 @@ else
     private int intReIntentos;
 
     private bool sinOrden;
+    private object lockObj = new object();
 
     protected override Task OnInitializedAsync()
     {
@@ -143,64 +145,70 @@ else
 
     private async void Bg_OnPaketReceived(BackgroudTask? sender, Tuple<int,string> e)
     {
-        // procesar el texto para ir mostrando en pantalla
-        if(bloques.ContainsKey(e.Item1))
+        lock (lockObj)
         {
-            return;            
-        }
-        bloques.Add(e.Item1, e.Item2);
-        IEnumerable<KeyValuePair<int, string>> ordenado;
-        if (sinOrden)
-        {
-            ordenado = bloques;
-        }
-        else
-        {
-            ordenado = bloques.OrderBy(b => b.Key);
-        }
-        
-        Console.WriteLine($"Paquete recibido: {e.Item1} - {e.Item2}");
-        intRecibidos++;
-        int id = 0;
-        bool puntos = false;
-        bloquesFinal.Clear();
-        foreach (var b in ordenado)
-        {
-            if(sinOrden)
+            // procesar el texto para ir mostrando en pantalla
+            if (bloques.ContainsKey(e.Item1))
             {
-                bloquesFinal.Add(b.Value);
-                continue;
+                return;
             }
-            if(id == 0)
+            bloques.AddOrUpdate(e.Item1, e.Item2, (key, oldValue) => e.Item2);
+            IEnumerable<KeyValuePair<int, string>> ordenado;
+            if (sinOrden)
             {
-                id = b.Key;
-                bloquesFinal.Add(b.Value);
-                continue;
-            }
-            if(id == b.Key -1)
-            {
-                bloquesFinal.Add(b.Value);
-                id = b.Key;
-                puntos = false;
-                continue;
-            }
-            if(!puntos)
-            {
-                bloquesFinal.Add("...");
-                puntos = true;
-                id = b.Key;
+                ordenado = bloques;
             }
             else
             {
-                puntos = false;
+                ordenado = bloques.OrderBy(b => b.Key);
             }
-            bloquesFinal.Add(b.Value);
+
+            Console.WriteLine($"Paquete recibido: {e.Item1} - {e.Item2}");
+            intRecibidos++;
+            int id = 0;
+            bool puntos = false;
+            bloquesFinal.Clear();
+            foreach (var b in ordenado)
+            {
+                if (sinOrden)
+                {
+                    bloquesFinal.Add(b.Value);
+                    continue;
+                }
+                if (id == 0)
+                {
+                    id = b.Key;
+                    bloquesFinal.Add(b.Value);
+                    continue;
+                }
+                if (id == b.Key - 1)
+                {
+                    bloquesFinal.Add(b.Value);
+                    id = b.Key;
+                    puntos = false;
+                    continue;
+                }
+                if (!puntos)
+                {
+                    bloquesFinal.Add("...");
+                    puntos = true;
+                    id = b.Key;
+                }
+                else
+                {
+                    puntos = false;
+                }
+                bloquesFinal.Add(b.Value);
+            }
+            string final = string.Join("", bloquesFinal);
+            var lista = final.Split("\n");
+            miHtml = lista.Select(s => new MarkupString(s));
+            //await InvokeAsync(() => { StateHasChanged(); });
+            //await Task.Yield();
+            //StateHasChanged();
+            InvokeAsync(() => { StateHasChanged(); });
         }
-        string final = string.Join("", bloquesFinal);
-        var lista = final.Split("\n");
-        miHtml = lista.Select(s=> new MarkupString(s));
-        await InvokeAsync(()=> { StateHasChanged(); });
-        await Task.Yield();        
+             
     }
 
     private void Bg_OnPaketError(object? sender, int totalReintentos)
