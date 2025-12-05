@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using multitronikllc.Servicios;
+using Shared;
 using System.Net;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
+using System.Net.Http.Json;
 
 namespace msTest
 {
@@ -15,9 +16,10 @@ namespace msTest
 
             public FakeHttpMessageHandler(HttpResponseMessage? response = null)
             {
+                var body = new ResponsePacket() { content = "NgMAAAEgIPXnAAACgWEgbEMBAAaBcWtmeGhq" };
                 _response = response ?? new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("{\"content\":\"datosbase64\"}")
+                    Content = JsonContent.Create(body)
                 };
             }
 
@@ -34,11 +36,15 @@ namespace msTest
 
         public SrvApiService_Test()
         {
-            
-            client = new HttpClient(handler);
 
+            client = new HttpClient(handler);
+            var severUrl = new KeyValuePair<string, string?>("serverUrl", "http://test");
+            var configData = new List<KeyValuePair<string, string?>>()
+            {
+                severUrl
+            };
             var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { { "serverUrl", "http://test" } })
+                .AddInMemoryCollection(configData)
                 .Build();
 
             _service = new SrvApiService(client, config);
@@ -60,16 +66,32 @@ namespace msTest
 
             // Assert: comprobar que se realizó una GET al endpoint esperado
             Assert.IsNotNull(handler.LastRequest, "No se recibió ninguna petición.");
-            Assert.AreEqual("http://test/Challenge/restart?userId=546", handler.LastRequest.RequestUri?.AbsoluteUri );
+            Assert.AreEqual("http://test/Challenge/restart?userId=546", handler.LastRequest.RequestUri?.AbsoluteUri);
             Assert.AreEqual(HttpMethod.Get, handler.LastRequest.Method);
         }
 
         [TestMethod]
         [DataRow(null)]
-        [DataRow(300)]
-        public async Task LeerPackete_Test(int? idPaket) {
+        [DataRow(822)]
+        public async Task LeerPackete_Test(int? idPaket)
+        {
             _service.userId = 546;
             var paket = await _service.LeerPackete(idPaket);
-            Assert.AreEqual(123, _service.userId);
+            Assert.AreEqual(546, _service.userId);
+            Assert.AreEqual(822, paket.Item1.Id);
+            Assert.AreEqual(1 , paket.Item1.Size);
+            Assert.AreEqual(32 , paket.Item1.Checksum);
+            Assert.AreEqual(" ", paket.Item2);
+
+            if(idPaket.HasValue)
+            {
+                Assert.AreEqual("http://test/Challenge/retry-packet?packetId=822", handler.LastRequest?.RequestUri?.AbsoluteUri);
+            }
+            else
+            {
+                Assert.AreEqual("http://test/Challenge/get-next-packet", handler.LastRequest?.RequestUri?.AbsoluteUri);
+            }            
+            Assert.AreEqual(HttpMethod.Get, handler.LastRequest?.Method);
         }
+    }
 }
