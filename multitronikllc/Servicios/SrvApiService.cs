@@ -6,9 +6,12 @@ namespace multitronikllc.Servicios
 {
     public class SrvApiService(HttpClient http, IConfiguration configRoot)
     {
-        public int userId { get; set {
+        public int userId {
+            get => field; 
+            set {
                 http.DefaultRequestHeaders.Remove("usuario-id");
-                http.DefaultRequestHeaders.Add("usuario-id", field.ToString());
+                http.DefaultRequestHeaders.Add("usuario-id", value.ToString());                
+                field = value;
             } }
 
         private string url = configRoot.GetValue<string>("serverUrl") ?? "http://mi-api:5000";

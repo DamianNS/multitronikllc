@@ -8,3 +8,5 @@
 multitronikllc.slnLaunch.user
 multitronikllc/multitronikllc.csproj.user
 multitronikllcAPIMock/multitronikllcAPIMock.csproj.user
+/msTest/bin
+/msTest/obj

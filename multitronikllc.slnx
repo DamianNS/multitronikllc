@@ -3,6 +3,7 @@
     <File Path="docs/challenge 1.txt" />
     <File Path="README.md" />
   </Folder>
+  <Project Path="msTest/msTest.csproj" Id="b243cb60-af13-4e36-80c0-7ce2a7c62bad" />
   <Project Path="multitronikllc/multitronikllc.csproj" />
   <Project Path="multitronikllcAPIMock/multitronikllcAPIMock.csproj" />
   <Project Path="Shared/Shared.csproj" Id="e98676bb-91a8-4e46-bccd-f6d80546b9ce" />
